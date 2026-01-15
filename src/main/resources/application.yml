@@ -1,0 +1,109 @@
+spring:
+  application:
+    name: CommonTools Server
+  
+  # 数据库配置
+  # 选项1: H2内存数据库（数据重启后丢失，仅用于快速测试）
+  # url: jdbc:h2:mem:commontoolsdb
+  
+  # 选项2: H2文件数据库（数据持久化，推荐用于开发环境）
+  # datasource:
+  #   url: jdbc:h2:file:./data/commontools;AUTO_SERVER=TRUE
+  #   driver-class-name: org.h2.Driver
+  #   username: root
+  #   password: root
+  
+  # 选项3: MySQL数据库（推荐用于生产环境）
+  datasource:
+    url: jdbc:mysql://localhost:3306/commontools?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8&useUnicode=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: root
+  
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  
+  # JPA配置
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update  # 使用 update 模式，不会自动修改列类型
+      # 如果需要重新创建表，临时改为 create 或 create-drop（会删除所有数据！）
+      # ddl-auto: create-drop  # 仅在需要重新创建表时使用，使用后改回 update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  
+  # 文件上传配置
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+  # 邮件配置
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: your-email@gmail.com
+    password: your-app-password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+# 应用配置
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.commontools.server: DEBUG
+    com.commontools.server.controller: DEBUG
+    com.commontools.server.config: DEBUG
+    com.commontools.server.security: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web.servlet.DispatcherServlet: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/commontools.log
+
+# JWT配置
+jwt:
+  secret: CommonToolsSecretKeyForJWTTokenGeneration2024
+  expiration: 86400000 # 24小时 (毫秒)
+
+# 文件存储配置
+file:
+  storage:
+    path: ./uploads
+    allowed-extensions: jpg,jpeg,png,gif,pdf,zip,rar,7z,doc,docx,xls,xlsx,ppt,pptx,txt
+
+# Swagger配置
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+# 邮件发送配置（自定义配置）
+mail:
+  from: your-email@gmail.com
+  admin: admin@commontools.com  # 接收反馈的邮箱地址
+
+# 统计配置
+statistics:
+  enabled: true
