@@ -27,27 +27,25 @@ SELECT
 FROM usage_statistics
 GROUP BY module;
 
--- 创建用户活跃度视图
-CREATE OR REPLACE VIEW v_user_activity AS
-SELECT 
-    u.id,
-    u.username,
-    u.email,
-    COUNT(DISTINCT us.stat_date) as active_days,
-    SUM(us.count) as total_requests
-FROM users u
-LEFT JOIN usage_statistics us ON u.id = us.user_id
-GROUP BY u.id, u.username, u.email;
+-- 注意：由于usage_statistics表的user_id是VARCHAR(36)存储UUID，不能直接JOIN users表
+-- 如果需要用户活跃度统计，可以使用以下视图（基于user_id字符串匹配）
+-- CREATE OR REPLACE VIEW v_user_activity AS
+-- SELECT 
+--     user_id,
+--     COUNT(DISTINCT DATE(stat_date)) as active_days,
+--     SUM(count) as total_requests
+-- FROM usage_statistics
+-- GROUP BY user_id;
 
 -- ============================================
 -- 存储过程示例（可选）
 -- ============================================
 
--- 获取模块统计的存储过程
+-- 获取模块统计的存储过程（更新为支持DATETIME类型）
 DELIMITER //
 CREATE PROCEDURE sp_get_module_statistics(
-    IN start_date DATE,
-    IN end_date DATE
+    IN start_datetime DATETIME,
+    IN end_datetime DATETIME
 )
 BEGIN
     SELECT 
@@ -56,14 +54,14 @@ BEGIN
         ROUND(SUM(count) * 100.0 / (
             SELECT SUM(count) 
             FROM usage_statistics 
-            WHERE stat_date BETWEEN start_date AND end_date
+            WHERE stat_date BETWEEN start_datetime AND end_datetime
         ), 2) as percentage
     FROM usage_statistics 
-    WHERE stat_date BETWEEN start_date AND end_date 
+    WHERE stat_date BETWEEN start_datetime AND end_datetime 
     GROUP BY module 
     ORDER BY total_count DESC;
 END //
 DELIMITER ;
 
 -- 使用示例：
--- CALL sp_get_module_statistics('2024-01-01', '2024-01-31');
+-- CALL sp_get_module_statistics('2024-01-01 00:00:00', '2024-01-31 23:59:59');

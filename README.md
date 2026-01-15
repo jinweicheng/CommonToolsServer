@@ -331,15 +331,15 @@ ORDER BY module, total_count DESC;
 5. **usage_statistics** - 使用统计表
 
 详细的数据库设计文档和SQL脚本请查看 `database/` 目录：
-- `database/schema.sql` - 完整的表结构创建脚本
+- `database/recreate_all_tables.sql` - 完整的表结构创建脚本（推荐使用）
 - `database/README.md` - 详细的数据库设计文档和常用SQL查询示例
-- `database/init.sql` - 初始化脚本（可选）
+- `database/init.sql` - 初始化脚本（可选，包含示例数据和视图、存储过程）
 
 ### 初始化数据库
 
-1. 创建MySQL数据库：
+1. 创建MySQL数据库并执行表结构脚本：
 ```bash
-mysql -u root -p < database/schema.sql
+mysql -u root -p < database/recreate_all_tables.sql
 ```
 
 2. 修改 `application.yml` 中的数据库连接信息：
