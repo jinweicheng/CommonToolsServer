@@ -38,9 +38,9 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/auth/**", "/statistics/**", "/swagger-ui/**", "/api-docs/**", "/h2-console/**").permitAll();
+                    auth.requestMatchers("/auth/**", "/statistics/**","/email/**", "/contact/**", "/front-errors/**", "/swagger-ui/**", "/api-docs/**", "/h2-console/**").permitAll();
                     auth.anyRequest().authenticated();
-                    log.info("Security配置完成 - /statistics/** 已设置为permitAll");
+                    log.info("Security配置完成 - /statistics/** 和 /contact/** 已设置为permitAll");
                 })
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

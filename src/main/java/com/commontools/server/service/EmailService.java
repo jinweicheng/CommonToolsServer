@@ -25,8 +25,12 @@ public class EmailService {
             message.setSubject(subject);
             message.setText(content);
             mailSender.send(message);
+        } catch (org.springframework.mail.MailAuthenticationException e) {
+            throw new RuntimeException("邮件发送失败: 认证失败，请检查邮件服务器配置（用户名、密码或应用专用密码）", e);
+        } catch (org.springframework.mail.MailException e) {
+            throw new RuntimeException("邮件发送失败: " + e.getMessage(), e);
         } catch (Exception e) {
-            throw new RuntimeException("邮件发送失败: " + e.getMessage());
+            throw new RuntimeException("邮件发送失败: " + e.getMessage(), e);
         }
     }
 
@@ -54,5 +58,39 @@ public class EmailService {
         );
 
         sendFeedbackEmail(userEmail, "【CommonTools】反馈确认", content);
+    }
+
+    /**
+     * 发送联系表单邮件给管理员
+     */
+    public void sendContactEmailToAdmin(String name, String email, String subject, String message) {
+        String adminContent = String.format(
+                "收到来自联系表单的消息：\n\n" +
+                "姓名：%s\n" +
+                "邮箱：%s\n" +
+                "主题：%s\n\n" +
+                "消息内容：\n%s\n\n" +
+                "请及时处理。",
+                name, email, subject, message
+        );
+
+        sendFeedbackEmail(adminEmail, "【CommonTools】联系表单：" + subject, adminContent);
+    }
+
+    /**
+     * 发送联系表单确认邮件给用户
+     */
+    public void sendContactConfirmation(String userEmail, String name, String subject) {
+        String content = String.format(
+                "尊敬的 %s，\n\n" +
+                "感谢您联系 CommonTools！我们已收到您的消息：\n" +
+                "主题：%s\n\n" +
+                "我们会尽快回复您。\n\n" +
+                "此邮件为自动发送，请勿回复。\n\n" +
+                "CommonTools 团队",
+                name, subject
+        );
+
+        sendFeedbackEmail(userEmail, "【CommonTools】联系确认", content);
     }
 }

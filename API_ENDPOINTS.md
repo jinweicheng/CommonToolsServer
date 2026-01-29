@@ -15,7 +15,7 @@
     {
       "module": "watermark",
       "action": "upload",
-      "endpoint": "/tools/watermark",
+      "endpoint": "/watermark",
       "ipAddress": null,
       "userAgent": "Mozilla/5.0...",
       "deviceType": "PC",

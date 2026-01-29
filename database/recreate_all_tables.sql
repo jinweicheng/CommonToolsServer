@@ -16,6 +16,7 @@ USE `commontools`;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- 删除所有表
+DROP TABLE IF EXISTS `contacts`;
 DROP TABLE IF EXISTS `usage_statistics`;
 DROP TABLE IF EXISTS `backup_files`;
 DROP TABLE IF EXISTS `password_entries`;
@@ -135,6 +136,40 @@ CREATE TABLE `feedbacks` (
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='反馈表';
+
+-- ============================================
+-- 6. 联系表单表 (contacts)
+-- 公开访问的联系表单，不需要关联用户表
+-- ============================================
+CREATE TABLE `contacts` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '联系ID',
+    `name` VARCHAR(100) NOT NULL COMMENT '姓名',
+    `email` VARCHAR(255) NOT NULL COMMENT '邮箱',
+    `subject` VARCHAR(200) NOT NULL COMMENT '主题',
+    `message` TEXT NOT NULL COMMENT '消息内容',
+    `email_sent` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否已发送邮件：1-已发送，0-未发送',
+    `error_message` VARCHAR(500) DEFAULT NULL COMMENT '发送失败时的错误信息',
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='联系表单表';
+
+
+CREATE TABLE `front_errors` (
+                                `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT 'ID',
+                                `user_id` VARCHAR(100) NOT NULL COMMENT '用户id',
+                                `module` VARCHAR(50) NOT NULL COMMENT '模块名称：watermark, conversion, signature, compression, heic-to-jpg, password-manager, pages等',
+                                `action` VARCHAR(50) NOT NULL COMMENT '操作名称：upload, download, preview, view, create, update, delete等',
+                                `endpoint` VARCHAR(200) NOT NULL COMMENT 'API端点路径',
+                                `ip_address` VARCHAR(50) DEFAULT NULL COMMENT 'IP地址',
+                                `device_type` VARCHAR(20) DEFAULT NULL COMMENT '设备类型：PC, MOBILE, TABLET, UNKNOWN',
+                                `error_message` VARCHAR(500) DEFAULT NULL COMMENT '发送失败时的错误信息',
+                                `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                                `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                                PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='前端运行异常表';
+
+
 
 -- ============================================
 -- 验证表结构

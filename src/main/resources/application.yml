@@ -46,10 +46,11 @@ spring:
 
   # 邮件配置
   mail:
-    host: smtp.gmail.com
+    host: smtp.office365.com
     port: 587
-    username: your-email@gmail.com
-    password: your-app-password
+    username: yourname@outlook.com
+    password: 16位应用专用密码
+    protocol: smtp
     properties:
       mail:
         smtp:
@@ -57,6 +58,28 @@ spring:
           starttls:
             enable: true
             required: true
+
+
+
+
+#  mail:
+#    host: smtp.gmail.com
+#    port: 587
+#    username: chengjinweigoogle@gmail.com
+#    password: wrwlhocwcrditgbs
+#    protocol: smtp
+#    properties:
+#      mail:
+#        smtp:
+#          auth: true
+#          starttls:
+#            enable: true
+#            required: true
+#          ssl:
+#            trust: smtp.gmail.com
+#          connectiontimeout: 5000
+#          timeout: 5000
+#          writetimeout: 5000
 
 # 应用配置
 server:
@@ -101,8 +124,8 @@ springdoc:
 
 # 邮件发送配置（自定义配置）
 mail:
-  from: your-email@gmail.com
-  admin: admin@commontools.com  # 接收反馈的邮箱地址
+  from: chengjinweigoogle@gmail.com
+  admin: chengjinweigoogle@gmail.com  # 接收反馈的邮箱地址
 
 # 统计配置
 statistics:
