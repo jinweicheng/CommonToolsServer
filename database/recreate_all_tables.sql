@@ -150,7 +150,7 @@ CREATE TABLE `front_errors` (
                                 `endpoint` VARCHAR(200) NOT NULL COMMENT 'API端点路径',
                                 `ip_address` VARCHAR(50) DEFAULT NULL COMMENT 'IP地址',
                                 `device_type` VARCHAR(20) DEFAULT NULL COMMENT '设备类型：PC, MOBILE, TABLET, UNKNOWN',
-                                `error_message` VARCHAR(500) DEFAULT NULL COMMENT '发送失败时的错误信息',
+                                `error_message` TEXT DEFAULT NULL COMMENT '发送失败时的错误信息',
                                 `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                                 `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
                                 PRIMARY KEY (`id`)

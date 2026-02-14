@@ -24,7 +24,28 @@ public class FrontError {
     @Column(name = "user_id", nullable = false, length = 100)
     private String userId;
 
-    @Column(name = "error_message", length = 500)
+    @Column(length = 50, nullable = false)
+    private String module;
+
+    @Column(length = 50, nullable = false)
+    private String action;
+
+    @Column(length = 200, nullable = false)
+    private String endpoint;
+
+    @Column(name = "ip_address", length = 50)
+    private String ipAddress;
+
+    @Column(name = "device_type", length = 20)
+    private String deviceType;
+
+    @Column(length = 50)
+    private String browser;
+
+    @Column(length = 50)
+    private String os;
+
+    @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
 
     @CreatedDate
