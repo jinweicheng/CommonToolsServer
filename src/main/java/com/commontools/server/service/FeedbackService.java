@@ -21,27 +21,45 @@ public class FeedbackService {
         Feedback feedback = new Feedback();
         feedback.setUser(user);
         feedback.setSubject(request.getSubject());
-        feedback.setContent(request.getContent());
+        // prefer `content`, fall back to `message` for compatibility with external callers
+        feedback.setContent(request.getContent() != null ? request.getContent() : request.getMessage());
         feedback.setCategory(request.getCategory() != null ? request.getCategory() : "other");
         feedback.setStatus(Feedback.FeedbackStatus.PENDING);
         feedback.setEmailSent(false);
+
+        // map optional client metadata
+        feedback.setName(request.getName());
+        feedback.setEmail(request.getEmail());
+        feedback.setMessage(request.getMessage());
+        feedback.setClientUserId(request.getUserId());
+        feedback.setUserAgent(request.getUserAgent());
+        feedback.setDeviceType(request.getDeviceType());
+        feedback.setBrowser(request.getBrowser());
+        feedback.setOs(request.getOs());
+        feedback.setIpAddress(request.getIpAddress());
+        feedback.setClientTimestamp(request.getTimestamp());
 
         Feedback savedFeedback = feedbackRepository.save(feedback);
 
         // 发送邮件给管理员
         try {
+            String contactEmail = (user != null ? user.getEmail() : request.getEmail());
+            String contactName = (user != null ? user.getUsername() : request.getName());
+            String contentForMail = feedback.getContent();
             emailService.sendFeedbackToAdmin(
-                    user.getEmail(),
-                    user.getUsername(),
-                    request.getSubject(),
-                    request.getContent()
+                contactEmail,
+                contactName,
+                request.getSubject(),
+                contentForMail
             );
-            // 发送确认邮件给用户
+            // 发送确认邮件给用户（当有邮箱时）
+            if (contactEmail != null && !contactEmail.isBlank()) {
             emailService.sendFeedbackConfirmation(
-                    user.getEmail(),
-                    user.getUsername(),
-                    request.getSubject()
+                contactEmail,
+                contactName,
+                request.getSubject()
             );
+            }
             savedFeedback.setEmailSent(true);
             feedbackRepository.save(savedFeedback);
         } catch (Exception e) {

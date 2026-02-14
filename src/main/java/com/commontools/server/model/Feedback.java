@@ -31,8 +31,38 @@ public class Feedback {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content; // 反馈内容
 
+    @Column(columnDefinition = "TEXT")
+    private String message; // optional raw message from clients (some clients send `message` instead of `content`)
+
     @Column(length = 50)
     private String category; // 反馈分类：bug, feature, suggestion, other
+
+    @Column(length = 100)
+    private String name; // submitter name
+
+    @Column(length = 200)
+    private String email; // submitter email
+
+    @Column(name = "client_user_id", length = 100)
+    private String clientUserId; // client-provided user id (optional)
+
+    @Column(name = "user_agent", length = 1000)
+    private String userAgent;
+
+    @Column(name = "device_type", length = 100)
+    private String deviceType;
+
+    @Column(length = 200)
+    private String browser;
+
+    @Column(length = 200)
+    private String os;
+
+    @Column(name = "ip_address", length = 100)
+    private String ipAddress;
+
+    @Column(name = "client_timestamp")
+    private String clientTimestamp; // keep as string to avoid parsing issues from client
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -22,11 +22,19 @@ public class FeedbackController {
     private final FeedbackService feedbackService;
     private final UserService userService;
 
-    @PostMapping
+    @PostMapping("/submit")
     public ResponseEntity<Feedback> createFeedback(
             @Valid @RequestBody FeedbackRequest request,
             Authentication authentication) {
-        User user = getCurrentUser(authentication);
+        User user = null;
+        if (authentication != null && authentication.isAuthenticated()) {
+            try {
+                user = getCurrentUser(authentication);
+            } catch (Exception ignore) {
+                // leave user as null when retrieval fails
+            }
+        }
+
         Feedback feedback = feedbackService.createFeedback(request, user);
         return ResponseEntity.ok(feedback);
     }
