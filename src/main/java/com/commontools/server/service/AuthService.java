@@ -31,14 +31,14 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
         User user = userService.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("用户名或密码错误"));
+                .orElseThrow(() -> new com.commontools.server.exception.AppException(com.commontools.server.exception.ErrorCode.USER_NOT_FOUND, "账号不存在"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("用户名或密码错误");
+            throw new com.commontools.server.exception.AppException(com.commontools.server.exception.ErrorCode.INVALID_CREDENTIALS, "登录密码错误");
         }
 
         if (user.getStatus() != User.UserStatus.ACTIVE) {
-            throw new RuntimeException("账户不可用");
+            throw new com.commontools.server.exception.AppException(com.commontools.server.exception.ErrorCode.ACCOUNT_DISABLED, "账户不可用");
         }
 
         return tokenService.createAuthResponse(user);
@@ -46,17 +46,17 @@ public class AuthService {
 
     public java.util.Optional<AuthResponse> refresh(String refreshToken) {
         java.util.Optional<com.commontools.server.model.RefreshToken> rtOpt = refreshTokenService.findByPlainToken(refreshToken);
-        if (rtOpt.isEmpty()) return java.util.Optional.empty();
+        if (rtOpt.isEmpty()) throw new com.commontools.server.exception.AppException(com.commontools.server.exception.ErrorCode.REFRESH_TOKEN_INVALID, "刷新令牌无效");
         com.commontools.server.model.RefreshToken rt = rtOpt.get();
         if (rt.getExpiresAt() != null && rt.getExpiresAt().isBefore(java.time.LocalDateTime.now())) {
-            refreshTokenService.deleteByPlainToken(refreshToken);
-            return java.util.Optional.empty();
+            refreshTokenService.revokeByPlainToken(refreshToken);
+            throw new com.commontools.server.exception.AppException(com.commontools.server.exception.ErrorCode.REFRESH_TOKEN_EXPIRED, "刷新令牌已过期");
         }
 
-        User user = userService.findById(rt.getUserId()).orElseThrow(() -> new RuntimeException("用户不存在"));
+        User user = userService.findById(rt.getUserId()).orElseThrow(() -> new com.commontools.server.exception.AppException(com.commontools.server.exception.ErrorCode.USER_NOT_FOUND, "用户不存在"));
 
-        // rotate: delete old and create new
-        refreshTokenService.deleteByPlainToken(refreshToken);
+        // rotate: delete old and create new (transactional revoke)
+        refreshTokenService.revokeByPlainToken(refreshToken);
         AuthResponse resp = tokenService.createAuthResponse(user);
         return java.util.Optional.of(resp);
     }

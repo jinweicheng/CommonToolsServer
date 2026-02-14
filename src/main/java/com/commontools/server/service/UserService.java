@@ -7,6 +7,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.commontools.server.exception.AppException;
+import com.commontools.server.exception.ErrorCode;
+
 import java.util.Optional;
 
 @Service
@@ -22,10 +25,10 @@ public class UserService {
     @Transactional
     public User register(User user) {
         if (userRepository.existsByUsername(user.getUsername())) {
-            throw new RuntimeException("用户名已存在");
+            throw new AppException(ErrorCode.USER_ALREADY_EXISTS, "用户名已存在");
         }
         if (userRepository.existsByEmail(user.getEmail())) {
-            throw new RuntimeException("邮箱已被注册");
+            throw new AppException(ErrorCode.EMAIL_ALREADY_REGISTERED, "邮箱已被注册");
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);

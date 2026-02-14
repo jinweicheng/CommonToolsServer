@@ -6,6 +6,9 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import com.commontools.server.dto.ApiResponse;
+import com.commontools.server.exception.AppException;
+import com.commontools.server.exception.ErrorCode;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -22,6 +25,12 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now()
         );
         return ResponseEntity.badRequest().body(error);
+    }
+
+    @ExceptionHandler(AppException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAppException(AppException e) {
+        ApiResponse<Void> resp = ApiResponse.error(e.getCode().name(), e.getMessage(), e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

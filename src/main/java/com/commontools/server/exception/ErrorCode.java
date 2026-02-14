@@ -1,0 +1,14 @@
+package com.commontools.server.exception;
+
+public enum ErrorCode {
+    INVALID_INPUT,
+    USER_NOT_FOUND,
+    USER_ALREADY_EXISTS,
+    EMAIL_ALREADY_REGISTERED,
+    INVALID_CREDENTIALS,
+    ACCOUNT_DISABLED,
+    REFRESH_TOKEN_INVALID,
+    REFRESH_TOKEN_EXPIRED,
+    LOGOUT_FAILED,
+    SERVER_ERROR
+}

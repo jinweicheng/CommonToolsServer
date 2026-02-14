@@ -13,6 +13,7 @@ public class ApiResponse<T> {
     private T data;
     private Integer recorded;
     private String error;
+    private String errorCode;
     private String details;
 
     public static <T> ApiResponse<T> success(String message, T data) {
@@ -34,8 +35,18 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> error(String error, String details) {
         ApiResponse<T> response = new ApiResponse<>();
         response.setSuccess(false);
+        response.setError(details);
+        response.setDetails(details);
+        response.setErrorCode(error);
+        return response;
+    }
+
+    public static <T> ApiResponse<T> error(String errorCode, String error, String details) {
+        ApiResponse<T> response = new ApiResponse<>();
+        response.setSuccess(false);
         response.setError(error);
         response.setDetails(details);
+        response.setErrorCode(errorCode);
         return response;
     }
 }
