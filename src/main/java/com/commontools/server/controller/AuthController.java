@@ -1,4 +1,5 @@
 package com.commontools.server.controller;
+
 import com.commontools.server.dto.AuthResponse;
 import com.commontools.server.dto.LoginRequest;
 import com.commontools.server.dto.RegisterRequest;
@@ -8,6 +9,9 @@ import com.commontools.server.dto.RefreshRequest;
 import com.commontools.server.dto.LogoutRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +24,9 @@ public class AuthController {
     private final com.commontools.server.util.JwtUtil jwtUtil;
     private final com.commontools.server.security.JwtBlacklistService jwtBlacklistService;
 
+    @Value("${auth.refresh-expiration-days:30}")
+    private int refreshExpirationDays;
+
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         AuthResponse response = authService.register(request);
@@ -29,13 +36,41 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
+
+        // set refresh token into HttpOnly secure cookie and remove from response body
+        if (response.getRefreshToken() != null) {
+            ResponseCookie cookie = ResponseCookie.from("refreshToken", response.getRefreshToken())
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/")
+                    .maxAge(refreshExpirationDays * 24L * 60L * 60L)
+                    .sameSite("Lax")
+                    .build();
+            response.setRefreshToken(null);
+            return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(response);
+        }
+
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshRequest request) {
         return authService.refresh(request.getRefreshToken())
-                .map(ResponseEntity::ok)
+                .map(resp -> {
+                    // set rotated refresh token into cookie
+                    if (resp.getRefreshToken() != null) {
+                        ResponseCookie cookie = ResponseCookie.from("refreshToken", resp.getRefreshToken())
+                                .httpOnly(true)
+                                .secure(true)
+                                .path("/")
+                                .maxAge(refreshExpirationDays * 24L * 60L * 60L)
+                                .sameSite("Lax")
+                                .build();
+                        resp.setRefreshToken(null);
+                        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(resp);
+                    }
+                    return ResponseEntity.ok(resp);
+                })
                 .orElseThrow(() -> new com.commontools.server.exception.AppException(com.commontools.server.exception.ErrorCode.REFRESH_TOKEN_INVALID, "刷新令牌无效或不可用"));
     }
 
@@ -62,7 +97,16 @@ public class AuthController {
             } catch (Exception ignored) {}
         }
 
-        return ResponseEntity.ok().build();
+        // clear refresh token cookie
+        ResponseCookie clear = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(0)
+                .sameSite("Lax")
+                .build();
+
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, clear.toString()).build();
     }
 }
 
