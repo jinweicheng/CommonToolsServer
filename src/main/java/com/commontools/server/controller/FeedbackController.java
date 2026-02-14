@@ -31,6 +31,13 @@ public class FeedbackController {
         return ResponseEntity.ok(feedback);
     }
 
+    // 公开接口：允许匿名提交反馈/联系表单（会写入 feedbacks 表）
+    @PostMapping("/public")
+    public ResponseEntity<Feedback> createPublicFeedback(@Valid @RequestBody com.commontools.server.dto.ContactRequest request) {
+        Feedback feedback = feedbackService.createFeedbackFromContact(request);
+        return ResponseEntity.ok(feedback);
+    }
+
     @GetMapping("/my")
     public ResponseEntity<List<Feedback>> getMyFeedbacks(Authentication authentication) {
         User user = getCurrentUser(authentication);

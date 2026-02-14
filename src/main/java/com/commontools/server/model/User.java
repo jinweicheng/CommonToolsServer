@@ -22,29 +22,20 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true, nullable = false)
+    private String email;
+
     @Column(unique = true, nullable = false, length = 50)
     private String username;
 
     @Column(nullable = false)
-    private String password;
-
-    @Column(unique = true, nullable = false)
-    private String email;
-
-    @Column(unique = true, length = 20)
-    private String phone;
-
-    @Column(length = 50)
-    private String nickname;
+    private String passwordHash;
 
     @Column(length = 500)
-    private String avatar;
+    private String avatarUrl;
 
-    @Column(length = 1)
-    private Integer gender; // 0-未知，1-男，2-女
-
-    @Column
-    private LocalDate birthday;
+    @Column(nullable = false)
+    private Boolean emailVerified = false;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -54,37 +45,24 @@ public class User {
     @Column(nullable = false, length = 20)
     private UserStatus status = UserStatus.ACTIVE;
 
-    @Column(nullable = false)
-    private Boolean enabled = true;
-
-    @Column(nullable = false)
-    private Boolean emailVerified = false;
-
-    @Column(nullable = false)
-    private Boolean phoneVerified = false;
-
-    @Column
-    private LocalDateTime lastLoginTime;
-
-    @Column(length = 50)
-    private String lastLoginIp;
-
-    @Column(nullable = false)
-    private Integer loginCount = 0;
-
-    @Column(length = 50)
-    private String registerSource; // WEB, APP, API等
-
-    @Column(length = 500)
-    private String remark;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
     @LastModifiedDate
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @Column
+    private LocalDateTime lastLoginAt;
+
+    public String getPassword() {
+        return this.passwordHash;
+    }
+
+    public void setPassword(String password) {
+        this.passwordHash = password;
+    }
 
     public enum UserRole {
         USER, ADMIN

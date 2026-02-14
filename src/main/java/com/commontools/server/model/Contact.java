@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
+@Deprecated
 public class Contact {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

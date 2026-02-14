@@ -1,9 +1,9 @@
 spring:
   datasource:
-    url: jdbc:mysql://127.0.0.1:3306/commontools?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/commontools?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: commontools
-    password: digitalocean269447@JY
+    username: ${DB_USERNAME:commontools}
+    password: ${DB_PASSWORD:change-me}
     hikari:
       maximum-pool-size: 5
       minimum-idle: 1
@@ -16,3 +16,44 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:}
+            client-secret: ${GOOGLE_CLIENT_SECRET:}
+            scope: openid,profile,email
+            redirect-uri: "{baseUrl}/login/oauth2/code/google"
+          github:
+            client-id: ${GITHUB_CLIENT_ID:}
+            client-secret: ${GITHUB_CLIENT_SECRET:}
+            scope: user:email
+            redirect-uri: "{baseUrl}/login/oauth2/code/github"
+          microsoft:
+            client-id: ${MICROSOFT_CLIENT_ID:}
+            client-secret: ${MICROSOFT_CLIENT_SECRET:}
+            scope: openid,profile,email
+            redirect-uri: "{baseUrl}/login/oauth2/code/microsoft"
+          facebook:
+            client-id: ${FACEBOOK_CLIENT_ID:}
+            client-secret: ${FACEBOOK_CLIENT_SECRET:}
+            scope: email,public_profile
+            redirect-uri: "{baseUrl}/login/oauth2/code/facebook"
+          linkedin:
+            client-id: ${LINKEDIN_CLIENT_ID:}
+            client-secret: ${LINKEDIN_CLIENT_SECRET:}
+            scope: r_liteprofile,r_emailaddress
+            redirect-uri: "{baseUrl}/login/oauth2/code/linkedin"
+
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    timeout: 2000
+
+app:
+  security:
+    oauth2:
+      enabled: ${OAUTH2_ENABLED:true}
+    redis-enabled: ${REDIS_ENABLED:true}

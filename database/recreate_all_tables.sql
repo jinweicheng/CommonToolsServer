@@ -123,25 +123,12 @@ CREATE TABLE `password_entries` (
 -- 5. 反馈表 (feedbacks)
 -- user_id是VARCHAR(36)用于存储UUID，没有外键约束
 -- ============================================
-CREATE TABLE `feedbacks` (
-    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '反馈ID',
-    `user_id` VARCHAR(36) NOT NULL COMMENT '用户ID',
-    `subject` VARCHAR(200) NOT NULL COMMENT '反馈主题',
-    `content` TEXT NOT NULL COMMENT '反馈内容',
-    `category` VARCHAR(50) DEFAULT NULL COMMENT '反馈分类：bug, feature, suggestion, other',
-    `status` VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '处理状态：PENDING-待处理，PROCESSING-处理中，RESOLVED-已解决，CLOSED-已关闭',
-    `admin_reply` VARCHAR(500) DEFAULT NULL COMMENT '管理员回复',
-    `email_sent` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否已发送邮件：1-已发送，0-未发送',
-    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='反馈表';
 
 -- ============================================
 -- 6. 联系表单表 (contacts)
 -- 公开访问的联系表单，不需要关联用户表
 -- ============================================
-CREATE TABLE `contacts` (
+CREATE TABLE `feedbacks` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '联系ID',
     `name` VARCHAR(100) NOT NULL COMMENT '姓名',
     `email` VARCHAR(255) NOT NULL COMMENT '邮箱',
@@ -152,7 +139,7 @@ CREATE TABLE `contacts` (
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='联系表单表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='反馈表';
 
 
 CREATE TABLE `front_errors` (

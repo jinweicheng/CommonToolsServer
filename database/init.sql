@@ -5,6 +5,45 @@
 
 USE `commontools`;
 
+
+
+CREATE TABLE users (
+                       id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                       email VARCHAR(255) UNIQUE NOT NULL,
+                       username VARCHAR(100) UNIQUE,
+                       password_hash VARCHAR(255),
+                       avatar_url VARCHAR(500),
+                       email_verified BOOLEAN DEFAULT FALSE,
+                       role VARCHAR(50) DEFAULT 'USER',
+                       status VARCHAR(50) DEFAULT 'ACTIVE',
+                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                       last_login_at TIMESTAMP
+);
+
+
+CREATE TABLE refresh_tokens (
+                                id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                                user_id BIGINT NOT NULL,
+                                token VARCHAR(500) NOT NULL,
+                                expires_at TIMESTAMP,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE oauth_accounts (
+                                id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                                user_id BIGINT NOT NULL,
+                                provider VARCHAR(50) NOT NULL,
+                                provider_user_id VARCHAR(255) NOT NULL,
+                                access_token TEXT,
+                                refresh_token TEXT,
+                                expires_at TIMESTAMP,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                UNIQUE(provider, provider_user_id),
+                                FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
 -- ============================================
 -- 插入示例数据（可选）
 -- ============================================

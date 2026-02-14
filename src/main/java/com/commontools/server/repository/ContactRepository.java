@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
+@Deprecated
 public interface ContactRepository extends JpaRepository<Contact, Long> {
     List<Contact> findByEmail(String email);
     List<Contact> findByEmailSent(Boolean emailSent);

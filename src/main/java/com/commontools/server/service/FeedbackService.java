@@ -52,6 +52,40 @@ public class FeedbackService {
         return savedFeedback;
     }
 
+    @Transactional
+    public Feedback createFeedbackFromContact(com.commontools.server.dto.ContactRequest request) {
+        Feedback feedback = new Feedback();
+        feedback.setUser(null);
+        feedback.setSubject(request.getSubject());
+        feedback.setContent(request.getMessage());
+        feedback.setCategory("contact");
+        feedback.setStatus(Feedback.FeedbackStatus.PENDING);
+        feedback.setEmailSent(false);
+
+        Feedback savedFeedback = feedbackRepository.save(feedback);
+
+        // send email to admin with contact info
+        try {
+            emailService.sendFeedbackToAdmin(
+                    request.getEmail(),
+                    request.getName(),
+                    request.getSubject(),
+                    request.getMessage()
+            );
+            emailService.sendFeedbackConfirmation(
+                    request.getEmail(),
+                    request.getName(),
+                    request.getSubject()
+            );
+            savedFeedback.setEmailSent(true);
+            feedbackRepository.save(savedFeedback);
+        } catch (Exception e) {
+            // log but continue
+        }
+
+        return savedFeedback;
+    }
+
     public List<Feedback> getUserFeedbacks(User user) {
         return feedbackRepository.findByUser(user);
     }

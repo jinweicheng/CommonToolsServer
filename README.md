@@ -5,12 +5,11 @@
 ## 功能特性
 
 ### 1. 用户认证系统
+
 - ✅ 用户注册
-- ✅ 用户登录（JWT Token认证）
-- ✅ 密码加密存储（BCrypt）
-- ✅ 用户信息管理
 
 ### 2. 文件备份功能
+
 - ✅ 多格式文件上传支持
   - 图片：jpg, jpeg, png, gif
   - 文档：pdf, doc, docx, xls, xlsx, ppt, pptx, txt
@@ -21,24 +20,14 @@
 - ✅ 文件信息查询
 
 ### 3. 密码管理器
+
 - ✅ 密码加密存储（AES加密）
-- ✅ 密码条目CRUD操作
-- ✅ 密码分类管理
-- ✅ 主密码保护机制
 
 ### 4. 反馈问题功能
-- ✅ 用户反馈提交
-- ✅ 自动发送邮件通知管理员
-- ✅ 用户反馈确认邮件
-- ✅ 反馈状态管理（待处理、处理中、已解决、已关闭）
-- ✅ 管理员回复功能
 
-### 5. 使用统计功能
-- ✅ 自动记录API调用统计到数据库
+- POST /feedback/public
+
 - ✅ 数据库表设计完善，支持SQL自定义统计查询
-- ✅ 记录模块、操作、用户、日期等维度信息
-
-### 6. 其他功能
 - ✅ 全局异常处理
 - ✅ API文档（Swagger）
 - ✅ CORS跨域支持
@@ -80,37 +69,44 @@ src/
 ## 快速开始
 
 ### 环境要求
+
 - JDK 17+
-- Maven 3.6+
 
 ### 安装步骤
 
 1. **克隆项目**
+
 ```bash
-git clone <repository-url>
-cd CommonToolsServer
+# 克隆命令
+git clone https://github.com/example/repo.git
 ```
 
 2. **编译项目**
+
 ```bash
-mvn clean install
+# 编译命令
+mvn clean package
 ```
 
 3. **运行项目**
+
 ```bash
-mvn spring-boot:run
+# 运行命令
+java -jar target/app.jar
 ```
 
 4. **访问应用**
-- API地址: http://localhost:8080/api
-- Swagger文档: http://localhost:8080/api/swagger-ui.html
-- H2控制台: http://localhost:8080/api/h2-console
+
+- API地址: [http://localhost:8080/api](http://localhost:8080/api)
+- Swagger文档: [http://localhost:8080/api/swagger-ui.html](http://localhost:8080/api/swagger-ui.html)
+- H2控制台: [http://localhost:8080/api/h2-console](http://localhost:8080/api/h2-console)
 
 ## API文档
 
 ### 认证接口
 
 #### 1. 用户注册
+
 ```
 POST /api/auth/register
 Content-Type: application/json
@@ -124,6 +120,7 @@ Content-Type: application/json
 ```
 
 #### 2. 用户登录
+
 ```
 POST /api/auth/login
 Content-Type: application/json
@@ -146,6 +143,7 @@ Content-Type: application/json
 ### 文件备份接口
 
 #### 1. 上传文件
+
 ```
 POST /api/files/upload
 Authorization: Bearer {token}
@@ -157,18 +155,21 @@ category: "image" (可选，支持: image, document, archive, other)
 ```
 
 #### 2. 获取文件列表
+
 ```
 GET /api/files?category=image (可选)
 Authorization: Bearer {token}
 ```
 
 #### 3. 下载文件
+
 ```
 GET /api/files/{fileId}/download
 Authorization: Bearer {token}
 ```
 
 #### 4. 删除文件
+
 ```
 DELETE /api/files/{fileId}
 Authorization: Bearer {token}
@@ -177,6 +178,7 @@ Authorization: Bearer {token}
 ### 密码管理器接口
 
 #### 1. 创建密码条目
+
 ```
 POST /api/passwords
 Authorization: Bearer {token}
@@ -194,6 +196,7 @@ Content-Type: application/json
 ```
 
 #### 2. 获取密码列表
+
 ```
 GET /api/passwords?category=工作 (可选)
 Authorization: Bearer {token}
@@ -201,6 +204,7 @@ X-Master-Password: {主密码}
 ```
 
 #### 3. 获取单个密码条目
+
 ```
 GET /api/passwords/{entryId}
 Authorization: Bearer {token}
@@ -208,6 +212,7 @@ X-Master-Password: {主密码}
 ```
 
 #### 4. 更新密码条目
+
 ```
 PUT /api/passwords/{entryId}
 Authorization: Bearer {token}
@@ -223,6 +228,7 @@ Content-Type: application/json
 ```
 
 #### 5. 删除密码条目
+
 ```
 DELETE /api/passwords/{entryId}
 Authorization: Bearer {token}
@@ -231,6 +237,7 @@ Authorization: Bearer {token}
 ### 用户信息接口
 
 #### 获取当前用户信息
+
 ```
 GET /api/users/me
 Authorization: Bearer {token}
@@ -239,6 +246,7 @@ Authorization: Bearer {token}
 ### 反馈问题接口
 
 #### 1. 提交反馈
+
 ```
 POST /api/feedback
 Authorization: Bearer {token}
@@ -254,24 +262,28 @@ Content-Type: application/json
 ```
 
 #### 2. 获取我的反馈列表
+
 ```
 GET /api/feedback/my
 Authorization: Bearer {token}
 ```
 
 #### 3. 获取单个反馈详情
+
 ```
 GET /api/feedback/{feedbackId}
 Authorization: Bearer {token}
 ```
 
 #### 4. 管理员 - 获取所有反馈
+
 ```
 GET /api/feedback/admin/all
 Authorization: Bearer {token}
 ```
 
 #### 5. 管理员 - 按状态查询反馈
+
 ```
 GET /api/feedback/admin/status/{status}
 Authorization: Bearer {token}
@@ -279,6 +291,7 @@ Authorization: Bearer {token}
 ```
 
 #### 6. 管理员 - 更新反馈状态
+
 ```
 PUT /api/feedback/admin/{feedbackId}/status?status=RESOLVED&adminReply=问题已解决
 Authorization: Bearer {token}

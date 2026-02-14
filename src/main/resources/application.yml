@@ -24,7 +24,9 @@ spring:
     console:
       enabled: true
       path: /h2-console
-  
+
+  # OAuth2 配置迁移到 application-oauth.yml（oauth profile）
+
   # JPA配置
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
@@ -108,6 +110,13 @@ logging:
 jwt:
   secret: CommonToolsSecretKeyForJWTTokenGeneration2024
   expiration: 86400000 # 24小时 (毫秒)
+
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  security:
+    oauth2:
+      enabled: ${OAUTH2_ENABLED:false}
+    redis-enabled: ${REDIS_ENABLED:false}
 
 # 文件存储配置
 file:

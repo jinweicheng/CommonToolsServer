@@ -2,8 +2,6 @@ package com.commontools.server.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -31,11 +29,12 @@ public class JwtUtil {
         Date expiryDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
-                .subject(username)
-                .issuedAt(now)
-                .expiration(expiryDate)
-                .signWith(getSigningKey())
-                .compact();
+            .setId(java.util.UUID.randomUUID().toString())
+            .subject(username)
+            .issuedAt(now)
+            .expiration(expiryDate)
+            .signWith(getSigningKey())
+            .compact();
     }
 
     public String getUsernameFromToken(String token) {
@@ -52,10 +51,11 @@ public class JwtUtil {
     }
 
     private Claims getAllClaimsFromToken(String token) {
-        JwtParser parser = Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build();
-        return parser.parseSignedClaims(token).getPayload();
+        return Jwts.parser()
+            .setSigningKey(getSigningKey())
+            .build()
+            .parseClaimsJws(token)
+            .getBody();
     }
 
     public Boolean isTokenExpired(String token) {
@@ -66,6 +66,10 @@ public class JwtUtil {
     public Boolean validateToken(String token, String username) {
         final String tokenUsername = getUsernameFromToken(token);
         return (tokenUsername.equals(username) && !isTokenExpired(token));
+    }
+
+    public String getJtiFromToken(String token) {
+        return getAllClaimsFromToken(token).getId();
     }
 }
 
