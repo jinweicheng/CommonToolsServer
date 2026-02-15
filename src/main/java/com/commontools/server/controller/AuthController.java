@@ -8,6 +8,8 @@ import com.commontools.server.service.RefreshTokenService;
 import com.commontools.server.dto.RefreshRequest;
 import com.commontools.server.dto.LogoutRequest;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -54,8 +56,29 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshRequest request) {
-        return authService.refresh(request.getRefreshToken())
+    public ResponseEntity<AuthResponse> refresh(@RequestBody(required = false) RefreshRequest request,
+                                                HttpServletRequest httpRequest) {
+        // prefer token from request body, fall back to cookie named 'refreshToken'
+        String token = null;
+        if (request != null && request.getRefreshToken() != null && !request.getRefreshToken().isBlank()) {
+            token = request.getRefreshToken();
+        }
+        if ((token == null || token.isBlank()) && httpRequest != null) {
+            Cookie[] cookies = httpRequest.getCookies();
+            if (cookies != null) {
+                for (Cookie c : cookies) {
+                    if ("refreshToken".equals(c.getName())) {
+                        token = c.getValue();
+                        break;
+                    }
+                }
+            }
+        }
+        if (token == null || token.isBlank()) {
+            throw new com.commontools.server.exception.AppException(com.commontools.server.exception.ErrorCode.REFRESH_TOKEN_INVALID, "刷新令牌无效或不可用");
+        }
+
+        return authService.refresh(token)
                 .map(resp -> {
                     // set rotated refresh token into cookie
                     if (resp.getRefreshToken() != null) {
