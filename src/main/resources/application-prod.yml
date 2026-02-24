@@ -17,35 +17,9 @@ spring:
       ddl-auto: update
     show-sql: false
 
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: ${GOOGLE_CLIENT_ID:}
-            client-secret: ${GOOGLE_CLIENT_SECRET:}
-            scope: openid,profile,email
-            redirect-uri: "{baseUrl}/login/oauth2/code/google"
-          github:
-            client-id: ${GITHUB_CLIENT_ID:}
-            client-secret: ${GITHUB_CLIENT_SECRET:}
-            scope: user:email
-            redirect-uri: "{baseUrl}/login/oauth2/code/github"
-          microsoft:
-            client-id: ${MICROSOFT_CLIENT_ID:}
-            client-secret: ${MICROSOFT_CLIENT_SECRET:}
-            scope: openid,profile,email
-            redirect-uri: "{baseUrl}/login/oauth2/code/microsoft"
-          facebook:
-            client-id: ${FACEBOOK_CLIENT_ID:}
-            client-secret: ${FACEBOOK_CLIENT_SECRET:}
-            scope: email,public_profile
-            redirect-uri: "{baseUrl}/login/oauth2/code/facebook"
-          linkedin:
-            client-id: ${LINKEDIN_CLIENT_ID:}
-            client-secret: ${LINKEDIN_CLIENT_SECRET:}
-            scope: r_liteprofile,r_emailaddress
-            redirect-uri: "{baseUrl}/login/oauth2/code/linkedin"
+  # OAuth2 configuration is managed in 'application-oauth.yml' (oauth profile).
+  # To enable OAuth2 in production, set OAUTH2_ENABLED=true and provide client credentials
+  # via environment variables (GOOGLE_CLIENT_ID, GITHUB_CLIENT_ID, etc.) or activate 'oauth' profile.
 
   redis:
     host: ${REDIS_HOST:localhost}
@@ -55,5 +29,5 @@ spring:
 app:
   security:
     oauth2:
-      enabled: ${OAUTH2_ENABLED:true}
+      enabled: ${OAUTH2_ENABLED:false}  # Default: disabled. Only enable if env vars are provided.
     redis-enabled: ${REDIS_ENABLED:true}

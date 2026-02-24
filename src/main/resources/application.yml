@@ -26,7 +26,15 @@ spring:
       path: /h2-console
 
   # OAuth2 配置迁移到 application-oauth.yml（oauth profile）
-
+  # Optional: GitHub OAuth2 client configuration (read from environment variables)
+  # If you prefer to use the `oauth` profile file (application-oauth.yml), keep that.
+  # This block lets the app register the GitHub client when env vars are provided,
+  # so you can enable OAuth without activating the 'oauth' profile.
+  # OAuth2 configuration is managed in 'application-oauth.yml' (oauth profile).
+  # To enable GitHub OAuth, either activate the 'oauth' profile or set
+  # `spring.security.oauth2.client.*` properties via environment variables
+  # or an external config. Avoid placing an empty registration block here
+  # because Spring Boot will validate and require a non-empty client-id.
   # JPA配置
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
