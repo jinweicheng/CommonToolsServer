@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,19 +29,33 @@ public class StatisticsService {
     /**
      * 获取客户端真实IP地址
      */
-    public String getClientIpAddress(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("X-Real-IP");
+//    public String getClientIpAddress(HttpServletRequest request) {
+//        String ip = request.getHeader("X-Forwarded-For");
+//        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+//            ip = request.getHeader("X-Real-IP");
+//        }
+//        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+//            ip = request.getRemoteAddr();
+//        }
+//        // 处理多个IP的情况，取第一个
+//        if (ip != null && ip.contains(",")) {
+//            ip = ip.split(",")[0].trim();
+//        }
+//        return ip;
+//    }
+
+    /**
+     * 批量记录统计数据（异步执行，避免阻塞主请求）
+     */
+    @Async("statisticsTaskExecutor")
+    @Transactional
+    public void recordStatisticsAsync(String userId, List<StatisticsRequest.StatisticsItem> statistics, 
+                                      String clientIp, String userAgent) {
+        try {
+            recordStatistics(userId, statistics, clientIp, userAgent);
+        } catch (Exception e) {
+            log.error("异步批量记录统计数据失败: userId={}", userId, e);
         }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        // 处理多个IP的情况，取第一个
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return ip;
     }
 
     /**
@@ -112,7 +127,6 @@ public class StatisticsService {
                 if (existingStats.isPresent()) {
                     // 如果已存在，增加计数并更新User-Agent和stat_date
                     UsageStatistics stats = existingStats.get();
-                    int oldCount = stats.getCount();
                     stats.setCount(stats.getCount() + 1);
                     stats.setStatDate(statDate); // 更新为最新的访问时间
                     if (finalUserAgent != null) {
@@ -128,19 +142,14 @@ public class StatisticsService {
                     if (item.getOs() != null) {
                         stats.setOs(item.getOs());
                     }
-                    UsageStatistics saved = statisticsRepository.save(stats);
-                    log.info("========== 更新统计记录 ==========");
-                    log.info("记录ID: {}", saved.getId());
-                    log.info("用户ID: {}", saved.getUserId());
-                    log.info("模块: {}", saved.getModule());
-                    log.info("操作: {}", saved.getAction());
-                    log.info("旧计数: {} -> 新计数: {}", oldCount, saved.getCount());
-                    log.info("日期时间: {}", saved.getStatDate());
-                    log.info("====================================");
+                    statisticsRepository.save(stats);
+                    // 仅在debug级别记录详细信息，避免高并发下大量日志输出
+                    if (log.isDebugEnabled()) {
+                        log.debug("更新统计记录 - userId: {}, module: {}, action: {}, count: {}", 
+                                userId, stats.getModule(), stats.getAction(), stats.getCount());
+                    }
                 } else {
                     // 如果不存在，尝试创建新记录
-                    // 注意：由于数据库唯一索引包含stat_date，如果stat_date不同但其他字段相同，可能会插入成功
-                    // 但如果stat_date相同，会出现唯一约束冲突，需要捕获并更新
                     try {
                         UsageStatistics newStats = new UsageStatistics();
                         newStats.setUserId(userId);
@@ -154,23 +163,14 @@ public class StatisticsService {
                         newStats.setOs(item.getOs());
                         newStats.setStatDate(statDate);
                         newStats.setCount(1);
-                        UsageStatistics saved = statisticsRepository.save(newStats);
-                        log.info("========== 插入新统计记录 ==========");
-                        log.info("记录ID: {}", saved.getId());
-                        log.info("用户ID: {}", saved.getUserId());
-                        log.info("模块: {}", saved.getModule());
-                        log.info("操作: {}", saved.getAction());
-                        log.info("端点: {}", saved.getEndpoint());
-                        log.info("计数: {}", saved.getCount());
-                        log.info("日期时间: {}", saved.getStatDate());
-                        log.info("IP: {}", saved.getIpAddress());
-                        log.info("User-Agent: {}", saved.getUserAgent());
-                        log.info("====================================");
+                        statisticsRepository.save(newStats);
+                        if (log.isDebugEnabled()) {
+                            log.debug("插入新统计记录 - userId: {}, module: {}, action: {}", 
+                                    userId, newStats.getModule(), newStats.getAction());
+                        }
                     } catch (DataIntegrityViolationException e) {
-                        // 如果出现唯一约束冲突（可能是stat_date相同但查询时没找到，或并发插入）
-                        // 重新查询并更新
-                        log.warn("检测到唯一约束冲突，重新查询并更新: userId={}, module={}, action={}, endpoint={}, ip={}", 
-                                userId, item.getModule(), item.getAction(), item.getEndpoint(), ipAddress);
+                        // 如果出现唯一约束冲突，重新查询并更新
+                        log.debug("检测到唯一约束冲突，重试更新: userId={}, module={}", userId, item.getModule());
                         
                         // 使用新事务重新查询并更新
                         retryUpdateAfterConflict(userId, item.getModule(), item.getAction(), 
@@ -181,8 +181,8 @@ public class StatisticsService {
                 recorded++;
             } catch (Exception e) {
                 // 记录单条失败不影响其他记录
-                log.error("记录统计失败: userId={}, module={}, action={}, error={}", 
-                        userId, item.getModule(), item.getAction(), e.getMessage(), e);
+                log.warn("记录单条统计失败: userId={}, module={}, action={}", 
+                        userId, item.getModule(), item.getAction(), e);
             }
         }
 
@@ -208,7 +208,6 @@ public class StatisticsService {
         
         if (retryStats.isPresent()) {
             UsageStatistics stats = retryStats.get();
-            int oldCount = stats.getCount();
             stats.setCount(stats.getCount() + 1);
             stats.setStatDate(statDate); // 更新为最新的访问时间
             if (userAgent != null) {
@@ -223,15 +222,11 @@ public class StatisticsService {
             if (os != null) {
                 stats.setOs(os);
             }
-            UsageStatistics saved = statisticsRepository.save(stats);
-            log.info("========== 并发冲突后更新统计记录 ==========");
-            log.info("记录ID: {}", saved.getId());
-            log.info("用户ID: {}", saved.getUserId());
-            log.info("模块: {}", saved.getModule());
-            log.info("操作: {}", saved.getAction());
-            log.info("旧计数: {} -> 新计数: {}", oldCount, saved.getCount());
-            log.info("日期时间: {}", saved.getStatDate());
-            log.info("====================================");
+            statisticsRepository.save(stats);
+            if (log.isDebugEnabled()) {
+                log.debug("并发冲突后更新统计记录 - userId: {}, module: {}, count: {}", 
+                        userId, module, stats.getCount());
+            }
         } else {
             // 如果仍然查询不到，可能是数据已被删除或stat_date不同导致唯一约束冲突
             // 尝试使用包含stat_date的精确查询
@@ -243,19 +238,14 @@ public class StatisticsService {
             if (exactStats.isPresent()) {
                 // 如果找到了精确匹配的记录，更新计数
                 UsageStatistics stats = exactStats.get();
-                int oldCount = stats.getCount();
                 stats.setCount(stats.getCount() + 1);
                 if (userAgent != null) {
                     stats.setUserAgent(userAgent);
                 }
                 statisticsRepository.save(stats);
-                log.info("========== 精确匹配后更新统计记录 ==========");
-                log.info("记录ID: {}", stats.getId());
-                log.info("旧计数: {} -> 新计数: {}", oldCount, stats.getCount());
-                log.info("====================================");
             } else {
-                log.warn("唯一约束冲突后重新查询仍然失败: userId={}, module={}, action={}, endpoint={}, ip={}", 
-                        userId, module, action, endpoint, ipAddress);
+                log.warn("唯一约束冲突后重新查询仍然失败: userId={}, module={}, action={}", 
+                        userId, module, action);
             }
         }
     }
@@ -272,5 +262,23 @@ public class StatisticsService {
      */
     public List<UsageStatistics> getAllStatistics() {
         return statisticsRepository.findAll();
+    }
+
+    /**
+     * 获取客户端真实IP地址
+     */
+    public String getClientIpAddress(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("X-Real-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        // 处理多个IP的情况，取第一个
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip;
     }
 }

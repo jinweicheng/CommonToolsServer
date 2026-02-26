@@ -3,31 +3,113 @@ spring:
     url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/commontools?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: ${DB_USERNAME:commontools}
-    password: ${DB_PASSWORD:change-me}
+    password: ${DB_PASSWORD:CommonTools!2026}
     hikari:
-      maximum-pool-size: 5
-      minimum-idle: 1
-      idle-timeout: 60000
-      max-lifetime: 300000
-      connection-timeout: 30000
+      maximum-pool-size: 20              # ✅ 优化：从5增加到20
+      minimum-idle: 5                    # ✅ 优化：从1增加到5
+      idle-timeout: 600000               # ✅ 优化：从60000增加到600000（10分钟）
+      max-lifetime: 1800000              # ✅ 优化：从300000增加到1800000（30分钟）
+      connection-timeout: 30000          # 保持30秒
+      leak-detection-threshold: 60000    # ✅ 新增：连接泄漏检测
 
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: update
     show-sql: false
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 20                 # ✅ 新增：批处理优化
+        order_inserts: true              # ✅ 新增：批量插入优化
+        order_updates: true              # ✅ 新增：批量更新优化
 
   # OAuth2 configuration is managed in 'application-oauth.yml' (oauth profile).
   # To enable OAuth2 in production, set OAUTH2_ENABLED=true and provide client credentials
   # via environment variables (GOOGLE_CLIENT_ID, GITHUB_CLIENT_ID, etc.) or activate 'oauth' profile.
 
   redis:
-    host: ${REDIS_HOST:localhost}
+    host: ${REDIS_HOST:127.0.0.1}
     port: ${REDIS_PORT:6379}
-    timeout: 2000
+    timeout: 2000ms                      # 连接超时2秒
+    password: ${REDIS_PASSWORD:CommonTools!2026}         # ✅ 新增：Redis密码支持
+    jedis:
+      pool:
+        max-active: 20                   # ✅ 新增：最大连接数
+        max-idle: 10                     # ✅ 新增：最大空闲连接
+        min-idle: 5                      # ✅ 新增：最小空闲连接
+        max-wait: 1000ms                 # ✅ 新增：最大等待时间
+
+  # 文件上传配置
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+  # ✅ 新增：Tomcat性能优化
+  tomcat:
+    threads:
+      max: 200                           # 最大线程数
+      min-spare: 10                      # 最小空闲线程
+    max-connections: 10000               # 最大连接数
+    accept-count: 100                    # 队列大小
+    connection-timeout: 20000            # 连接超时20秒
+
+# ✅ 新增：日志配置（生产环境降低日志级别以减少CPU占用）
+logging:
+  level:
+    root: WARN                           # 只记录警告和错误
+    com.commontools.server: INFO         # 应用业务日志记录
+    org.springframework.web: WARN        # 框架日志降低
+    org.springframework.security: WARN
+    org.hibernate: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /var/log/commontools/commontools.log  # ✅ 生产环境日志路径
+    max-size: 100MB                     # 单文件最大100MB
+    max-history: 30                     # 保留30天日志
+    total-size-cap: 1GB                 # 日志总大小上限1GB
+
+# JWT配置
+jwt:
+  secret: ${JWT_SECRET:CommonToolsSecretKeyForJWTTokenGeneration2024}
+  expiration: 86400000 # 24小时 (毫秒)
 
 app:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
   security:
     oauth2:
-      enabled: ${OAUTH2_ENABLED:false}  # Default: disabled. Only enable if env vars are provided.
-    redis-enabled: ${REDIS_ENABLED:true}
+      enabled: ${OAUTH2_ENABLED:false}
+    redis-enabled: ${REDIS_ENABLED:true}  # ✅ 生产环境启用Redis
+
+# 文件存储配置
+file:
+  storage:
+    path: ${FILE_STORAGE_PATH:/var/data/commontools/uploads}  # ✅ 生产环境路径
+    allowed-extensions: jpg,jpeg,png,gif,pdf,zip,rar,7z,doc,docx,xls,xlsx,ppt,pptx,txt
+
+# 邮件配置
+mail:
+  from: ${MAIL_FROM:noreply@example.com}
+  admin: ${MAIL_ADMIN:admin@example.com}
+
+# 统计配置 - 生产环境默认禁用以减少CPU占用
+statistics:
+  enabled: ${STATISTICS_ENABLED:false}
+  
+# ✅ 新增：性能监控端点（可选，用于健康检查和监控）
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized

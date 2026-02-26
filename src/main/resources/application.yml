@@ -19,6 +19,15 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: root
+    # HikariCP连接池配置 - 优化数据库连接
+    hikari:
+      maximum-pool-size: 20              # 最大连接数
+      minimum-idle: 5                    # 最小空闲连接数
+      connection-timeout: 30000          # 连接超时时间（毫秒）
+      idle-timeout: 600000               # 连接最大空闲时间（毫秒）
+      max-lifetime: 1800000              # 连接最大生命周期（毫秒）
+      auto-commit: true                  # 自动提交
+      leak-detection-threshold: 60000    # 连接泄漏检测阈值（毫秒）
   
   h2:
     console:
@@ -42,10 +51,14 @@ spring:
       ddl-auto: update  # 使用 update 模式，不会自动修改列类型
       # 如果需要重新创建表，临时改为 create 或 create-drop（会删除所有数据！）
       # ddl-auto: create-drop  # 仅在需要重新创建表时使用，使用后改回 update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
+        jdbc:
+          batch_size: 20               # 批处理大小
+        order_inserts: true            # 排序插入
+        order_updates: true            # 排序更新
   
   # 文件上传配置
   servlet:
@@ -68,6 +81,18 @@ spring:
           starttls:
             enable: true
             required: true
+  
+  # Redis配置优化
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 2000ms
+    jedis:
+      pool:
+        max-active: 20                 # 连接池最大活跃连接数
+        max-idle: 10                   # 最大空闲连接
+        min-idle: 5                    # 最小空闲连接
+        max-wait: 1000ms               # 最大等待时间
 
 
 
@@ -96,23 +121,34 @@ server:
   port: 8080
   servlet:
     context-path: /api
+  # Tomcat连接池优化
+  tomcat:
+    threads:
+      max: 200                         # 最大线程数
+      min-spare: 10                    # 最小空闲线程
+    max-connections: 10000             # 最大连接数
+    accept-count: 100                  # 等待队列大小
 
-# 日志配置
+# 日志配置 - 优化避免高并发下CPU占用
 logging:
   level:
     root: INFO
-    com.commontools.server: DEBUG
-    com.commontools.server.controller: DEBUG
-    com.commontools.server.config: DEBUG
-    com.commontools.server.security: DEBUG
-    org.springframework.web: DEBUG
-    org.springframework.security: DEBUG
-    org.springframework.web.servlet.DispatcherServlet: DEBUG
+    com.commontools.server: INFO       # 降低日志级别，减少日志输出
+    com.commontools.server.controller: INFO
+    com.commontools.server.config: INFO
+    com.commontools.server.security: INFO
+    org.springframework.web: WARN       # 降低框架日志级别
+    org.springframework.security: WARN
+    org.springframework.web.servlet.DispatcherServlet: WARN
+    org.hibernate: WARN                # 降低Hibernate日志级别
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
   file:
     name: logs/commontools.log
+    max-size: 100MB                    # 日志文件最大大小
+    max-history: 30                    # 保留天数
+    total-size-cap: 1GB                # 日志总大小上限
 
 # JWT配置
 jwt:
@@ -144,6 +180,6 @@ mail:
   from: chengjinweigoogle@gmail.com
   admin: chengjinweigoogle@gmail.com  # 接收反馈的邮箱地址
 
-# 统计配置
+# 统计配置 - 默认禁用以减少CPU占用，可通过环境变量启用
 statistics:
-  enabled: true
+  enabled: ${STATISTICS_ENABLED:false}

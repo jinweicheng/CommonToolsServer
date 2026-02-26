@@ -2,13 +2,16 @@ package com.commontools.server.aspect;
 
 import com.commontools.server.model.UsageStatistics;
 import com.commontools.server.repository.UsageStatisticsRepository;
+import com.commontools.server.service.StatisticsService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -20,8 +23,10 @@ import java.util.Optional;
 @Aspect
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class StatisticsAspect {
     private final UsageStatisticsRepository statisticsRepository;
+    private final StatisticsService statisticsService;
 
     @Value("${statistics.enabled:true}")
     private boolean statisticsEnabled;
@@ -104,47 +109,54 @@ public class StatisticsAspect {
             String browser = parseBrowser(userAgent);
             String os = parseOS(userAgent);
 
-            // 记录统计
-            recordUsage(userId, module, action, endpoint, ipAddress, userAgent, 
-                       deviceType, browser, os);
+            // 异步记录统计，不阻塞主请求
+            recordUsageAsync(userId, module, action, endpoint, ipAddress, userAgent, 
+                           deviceType, browser, os);
         } catch (Exception e) {
             // 记录统计失败不应影响主业务
-            System.err.println("统计记录失败: " + e.getMessage());
+            log.warn("统计记录失败: {}", e.getMessage());
         }
     }
 
-    @Transactional
-    private void recordUsage(String userId, String module, String action, String endpoint, 
-                           String ipAddress, String userAgent, 
-                           String deviceType, String browser, String os) {
-        LocalDateTime now = LocalDateTime.now();
-        // 将时间精确到秒（去掉毫秒和微秒），便于聚合统计
-        LocalDateTime statDate = now.withNano(0);
-        
-        Optional<UsageStatistics> existingStats = statisticsRepository
-                .findByUserIdAndModuleAndActionAndStatDateAndEndpointAndIpAddress(
-                        userId, module, action, statDate, endpoint, ipAddress);
+    /**
+     * 异步记录使用统计，避免阻塞主请求
+     */
+    @Async("statisticsTaskExecutor")
+    public void recordUsageAsync(String userId, String module, String action, String endpoint, 
+                                String ipAddress, String userAgent, 
+                                String deviceType, String browser, String os) {
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            // 将时间精确到秒（去掉毫秒和微秒），便于聚合统计
+            LocalDateTime statDate = now.withNano(0);
+            
+            Optional<UsageStatistics> existingStats = statisticsRepository
+                    .findByUserIdAndModuleAndActionAndStatDateAndEndpointAndIpAddress(
+                            userId, module, action, statDate, endpoint, ipAddress);
 
-        if (existingStats.isPresent()) {
-            // 如果已存在，增加计数
-            UsageStatistics stats = existingStats.get();
-            stats.setCount(stats.getCount() + 1);
-            statisticsRepository.save(stats);
-        } else {
-            // 如果不存在，创建新记录
-            UsageStatistics newStats = new UsageStatistics();
-            newStats.setUserId(userId);
-            newStats.setModule(module);
-            newStats.setAction(action);
-            newStats.setEndpoint(endpoint);
-            newStats.setIpAddress(ipAddress);
-            newStats.setUserAgent(userAgent);
-            newStats.setDeviceType(deviceType);
-            newStats.setBrowser(browser);
-            newStats.setOs(os);
-            newStats.setStatDate(statDate);
-            newStats.setCount(1);
-            statisticsRepository.save(newStats);
+            if (existingStats.isPresent()) {
+                // 如果已存在，增加计数
+                UsageStatistics stats = existingStats.get();
+                stats.setCount(stats.getCount() + 1);
+                statisticsRepository.save(stats);
+            } else {
+                // 如果不存在，创建新记录
+                UsageStatistics newStats = new UsageStatistics();
+                newStats.setUserId(userId);
+                newStats.setModule(module);
+                newStats.setAction(action);
+                newStats.setEndpoint(endpoint);
+                newStats.setIpAddress(ipAddress);
+                newStats.setUserAgent(userAgent);
+                newStats.setDeviceType(deviceType);
+                newStats.setBrowser(browser);
+                newStats.setOs(os);
+                newStats.setStatDate(statDate);
+                newStats.setCount(1);
+                statisticsRepository.save(newStats);
+            }
+        } catch (Exception e) {
+            log.error("异步统计记录失败: userId={}, module={}, action={}", userId, module, action, e);
         }
     }
 
