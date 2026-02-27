@@ -29,7 +29,7 @@ spring:
   # via environment variables (GOOGLE_CLIENT_ID, GITHUB_CLIENT_ID, etc.) or activate 'oauth' profile.
 
   redis:
-    host: ${REDIS_HOST:142.93.123.103}
+    host: ${REDIS_HOST:127.0.0.1}
     port: ${REDIS_PORT:6379}
     timeout: 2000ms                      # 连接超时2秒
     password: ${REDIS_PASSWORD:CommonTools!2026}         # ✅ 新增：Redis密码支持
