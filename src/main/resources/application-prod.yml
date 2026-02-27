@@ -1,9 +1,10 @@
 spring:
   datasource:
-    url: jdbc:mysql://127.0.0.1:3306/commontools?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+#    url: jdbc:mysql://127.0.0.1:3306/commontools?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: commontools
-    password: CommonTools!2026
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     hikari:
       maximum-pool-size: 20              # ✅ 优化：从5增加到20
       minimum-idle: 5                    # ✅ 优化：从1增加到5
@@ -29,7 +30,7 @@ spring:
   # via environment variables (GOOGLE_CLIENT_ID, GITHUB_CLIENT_ID, etc.) or activate 'oauth' profile.
 
   redis:
-    host: ${REDIS_HOST:127.0.0.1}
+    host: ${REDIS_HOST:142.93.123.103}
     port: ${REDIS_PORT:6379}
     timeout: 2000ms                      # 连接超时2秒
     password: ${REDIS_PASSWORD:CommonTools!2026}         # ✅ 新增：Redis密码支持
